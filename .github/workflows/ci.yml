@@ -27,6 +27,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest pytest-cov pylint
+        pip install moviepy imageio gradio
 
     - name: Run tests with coverage
       run: |

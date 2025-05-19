@@ -24,9 +24,11 @@ class TestVideoProcessor(TestCase):
             frame = np.zeros((100, 100, 3), dtype=np.uint8)
             frame[:, :, i % 3] = 255  # Create RGB pattern
             frames.append(frame)
-            
-        clip = VideoFileClip(self.test_video, duration=1)
-        clip.write_videofile(self.test_video, fps=30)
+        
+        # Create a clip from frames
+        from moviepy.video.VideoClip import ImageSequenceClip
+        clip = ImageSequenceClip(frames, fps=30)
+        clip.write_videofile(self.test_video, fps=30, codec='libx264')
         
     def tearDown(self):
         """Clean up test files"""

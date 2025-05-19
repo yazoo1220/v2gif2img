@@ -1,0 +1,25 @@
+name: Deploy to Spaces
+on:
+  push:
+    branches: [main]
+
+jobs:
+  sync-to-space:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Push to Hugging Face Spaces
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git clone https://huggingface.co/spaces/yazoo1220/v2gif2img
+          cp -r * v2gif2img/
+          cd v2gif2img
+          git add .
+          git commit -m "Sync from GitHub"
+          git push https://yazoo1220:$HF_TOKEN@huggingface.co/spaces/yazoo1220/v2gif2img main

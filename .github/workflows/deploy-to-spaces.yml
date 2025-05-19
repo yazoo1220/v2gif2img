@@ -1,62 +1,60 @@
-name: Deploy to Spaces
+name: Deploy to Hugging Face Spaces
 on:
   push:
     branches: [main]
 
 jobs:
-  sync-to-space:
+  deploy-to-spaces:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-      - name: Push to Hugging Face Spaces
+      
+      - name: Create Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
+          # Install Hugging Face Hub CLI
+          pip install huggingface_hub
+          
+          # Create Space if it doesn't exist
+          python -c "
+          from huggingface_hub import HfApi, SpaceHardware, SpaceStorage, SpaceSdk
+          
+          api = HfApi(token='$HF_TOKEN')
+          
+          # Check if space exists
+          try:
+              api.get_space_info('yazoo1220/v2gif2img')
+              print('Space already exists')
+          except Exception as e:
+              print('Creating new space')
+              api.create_space(
+                  'yazoo1220/v2gif2img',
+                  space_sdk=SpaceSdk.GRADIO,
+                  space_hardware=SpaceHardware.CPU_BASIC,
+                  space_storage=SpaceStorage.SMALL,
+              )
+          "
+      
+      - name: Prepare files for Space
+        run: |
+          mkdir -p space
+          cp -r src space/
+          cp app.py space/
+          cp requirements.txt space/
+          cp README-HF.md space/README.md
+      
+      - name: Push to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          cd space
+          git init
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
-          # Create or clone the space
-          if [ -d "space" ]; then rm -rf space; fi
+          git add .
+          git commit -m "Update from GitHub Actions"
           
-          # Try to clone the space, if it exists
-          git clone https://yazoo1220:$HF_TOKEN@huggingface.co/spaces/yazoo1220/v2gif2img space || (
-            # If clone fails, create a new space
-            mkdir -p space
-            cd space
-            git init
-            git config --global init.defaultBranch main
-            git checkout -b main
-            git remote add origin https://huggingface.co/spaces/yazoo1220/v2gif2img
-            
-            # Create initial files
-            echo "# v2gif2img" > README.md
-            cp ../README-HF.md .
-            cp ../requirements.txt .
-            cp ../app.py .
-            mkdir -p src
-            cp ../src/app.py src/
-            cp ../src/video_processor.py src/
-            
-            # Commit and push
-            git add .
-            git commit -m "Initial commit"
-            git push -u https://yazoo1220:$HF_TOKEN@huggingface.co/spaces/yazoo1220/v2gif2img main
-            cd ..
-          )
-          
-          # If space already exists, update it
-          if [ -d "space/.git" ]; then
-            cd space
-            # Copy all files from the repository
-            cp -r ../src .
-            cp ../app.py .
-            cp ../requirements.txt .
-            cp ../README-HF.md .
-            
-            # Commit and push changes
-            git add .
-            git commit -m "Sync from GitHub" || echo "No changes to commit"
-            git push https://yazoo1220:$HF_TOKEN@huggingface.co/spaces/yazoo1220/v2gif2img main
-          fi
+          # Push to Hugging Face Space
+          git remote add origin https://yazoo1220:$HF_TOKEN@huggingface.co/spaces/yazoo1220/v2gif2img
+          git push -f origin main

@@ -1,0 +1,27 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Python files
+*.py text diff=python
+
+# Documentation
+*.md text diff=markdown
+
+# Config files
+*.json text
+*.yml text
+*.yaml text
+*.toml text
+*.ini text
+*.cfg text
+
+# Docker files
+*.dockerfile text
+Dockerfile text
+
+# Ignore binary files in diff
+*.mp4 binary
+*.gif binary
+*.png binary
+*.jpg binary
+*.jpeg binary

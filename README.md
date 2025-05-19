@@ -87,4 +87,4 @@ MIT
 
 ## 作者
 
-やすさん
+Yachimat

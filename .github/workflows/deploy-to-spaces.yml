@@ -17,20 +17,46 @@ jobs:
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
+          # Create or clone the space
           if [ -d "space" ]; then rm -rf space; fi
-          git clone https://huggingface.co/spaces/yazoo1220/v2gif2img space || (
-            git init space
+          
+          # Try to clone the space, if it exists
+          git clone https://yazoo1220:$HF_TOKEN@huggingface.co/spaces/yazoo1220/v2gif2img space || (
+            # If clone fails, create a new space
+            mkdir -p space
             cd space
+            git init
             git config --global init.defaultBranch main
+            git checkout -b main
             git remote add origin https://huggingface.co/spaces/yazoo1220/v2gif2img
+            
+            # Create initial files
             echo "# v2gif2img" > README.md
-            git add README.md
+            cp ../README-HF.md .
+            cp ../requirements.txt .
+            cp ../app.py .
+            mkdir -p src
+            cp ../src/app.py src/
+            cp ../src/video_processor.py src/
+            
+            # Commit and push
+            git add .
             git commit -m "Initial commit"
-            git push --set-upstream https://yazoo1220:$HF_TOKEN@huggingface.co/spaces/yazoo1220/v2gif2img main
+            git push -u https://yazoo1220:$HF_TOKEN@huggingface.co/spaces/yazoo1220/v2gif2img main
             cd ..
           )
-          cp -r * space/ || true
-          cd space
-          git add .
-          git commit -m "Sync from GitHub" || echo "No changes to commit"
-          git push https://yazoo1220:$HF_TOKEN@huggingface.co/spaces/yazoo1220/v2gif2img main
+          
+          # If space already exists, update it
+          if [ -d "space/.git" ]; then
+            cd space
+            # Copy all files from the repository
+            cp -r ../src .
+            cp ../app.py .
+            cp ../requirements.txt .
+            cp ../README-HF.md .
+            
+            # Commit and push changes
+            git add .
+            git commit -m "Sync from GitHub" || echo "No changes to commit"
+            git push https://yazoo1220:$HF_TOKEN@huggingface.co/spaces/yazoo1220/v2gif2img main
+          fi
